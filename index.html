@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accessible Campus Navigation</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f7fb;color:#172033;margin:0}
+header{background:#174a6e;color:white;padding:24px}
+main{max-width:1050px;margin:22px auto;padding:0 16px}
+.card{background:white;border-radius:12px;padding:20px;margin-bottom:18px;box-shadow:0 2px 8px #0001}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+label{display:block;font-weight:bold;margin-bottom:6px}
+select{width:100%;padding:10px;border:1px solid #b7c4d0;border-radius:6px}
+button{background:#176b87;color:white;border:0;padding:12px 18px;border-radius:7px;font-weight:bold;cursor:pointer}
+small,.muted{color:#5c6875}
+h2{margin-top:0;color:#174a6e}.pill{display:inline-block;background:#e6f3f8;padding:5px 9px;border-radius:20px;margin:3px}
+.error{background:#ffe8e8;padding:12px;border-radius:7px}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:8px;border-bottom:1px solid #e3e8ed}
+</style>
+</head>
+<body>
+<header><h1>Accessible Campus Navigation</h1><div>Group 3 · CST401 Artificial Intelligence · SDGs 4, 10 and 11</div></header>
+<main>
+<section class="card">
+<h2>Find an accessible route</h2>
+<p class="muted">This demonstration uses a fictional campus map and synthetic travel-cost units. Do not use it as a real campus safety/navigation system.</p>
+<form method="post">
+<div class="grid">
+<div><label for="start">Start location</label><select id="start" name="start">{% for x in locations %}<option {% if x==start %}selected{% endif %}>{{x}}</option>{% endfor %}</select></div>
+<div><label for="goal">Destination</label><select id="goal" name="goal">{% for x in locations %}<option {% if x==goal %}selected{% endif %}>{{x}}</option>{% endfor %}</select></div>
+<div><label for="mobility">Mobility requirement</label><select id="mobility" name="mobility"><option value="yes" {% if mobility %}selected{% endif %}>Avoid stairs</option><option value="no" {% if not mobility %}selected{% endif %}>Stairs are acceptable</option></select></div>
+<div><label for="lift">Lift status</label><select id="lift" name="lift"><option value="yes" {% if lift_available %}selected{% endif %}>Available</option><option value="no" {% if not lift_available %}selected{% endif %}>Unavailable</option></select></div>
+<div><label for="closure">Closed path (optional)</label><select id="closure" name="closure"><option value="">No closure</option>
+<option value="Main Gate|Admin Block" {% if closure=="Main Gate|Admin Block" %}selected{% endif %}>Main Gate – Admin Block</option>
+<option value="Main Gate|Library" {% if closure=="Main Gate|Library" %}selected{% endif %}>Main Gate – Library</option>
+<option value="Admin Block|Library" {% if closure=="Admin Block|Library" %}selected{% endif %}>Admin Block – Library</option>
+<option value="Admin Block|Academic Block" {% if closure=="Admin Block|Academic Block" %}selected{% endif %}>Admin Block – Academic Block</option>
+<option value="Library|Academic Block" {% if closure=="Library|Academic Block" %}selected{% endif %}>Library – Academic Block</option>
+<option value="Library|Canteen" {% if closure=="Library|Canteen" %}selected{% endif %}>Library – Canteen</option>
+<option value="Academic Block|Canteen" {% if closure=="Academic Block|Canteen" %}selected{% endif %}>Academic Block – Canteen</option>
+<option value="Academic Block|Computer Lab" {% if closure=="Academic Block|Computer Lab" %}selected{% endif %}>Academic Block – Computer Lab</option>
+<option value="Canteen|Computer Lab" {% if closure=="Canteen|Computer Lab" %}selected{% endif %}>Canteen – Computer Lab</option>
+<option value="Computer Lab|Auditorium" {% if closure=="Computer Lab|Auditorium" %}selected{% endif %}>Computer Lab – Auditorium</option>
+<option value="Canteen|Auditorium" {% if closure=="Canteen|Auditorium" %}selected{% endif %}>Canteen – Auditorium</option>
+</select></div>
+</div><p><button type="submit">Calculate route and AI results</button></p>
+</form>
+</section>
+{% if result %}
+{% if result.error %}<div class="error">{{result.error}}</div>{% else %}
+<section class="card"><h2>CO2 · Search comparison</h2>
+<div class="grid">
+<div><h3>Breadth-First Search (BFS)</h3>{% if result.bfs.path %}<p><b>Path:</b> {{result.bfs.path|join(' → ')}}</p><p><b>Travel cost:</b> {{result.bfs.cost}}</p>{% else %}<p>No route found under these constraints.</p>{% endif %}<p>Nodes expanded: {{result.bfs.expanded}}</p></div>
+<div><h3>A* Search</h3>{% if result.astar.path %}<p><b>Path:</b> {{result.astar.path|join(' → ')}}</p><p><b>Travel cost:</b> {{result.astar.cost}}</p>{% else %}<p>No route found under these constraints.</p>{% endif %}<p>Nodes expanded: {{result.astar.expanded}}</p></div>
+</div><small>BFS minimises number of edges, not weighted travel cost. A* uses path cost and a simple illustrative heuristic; results should be interpreted as a teaching demonstration.</small>
+</section>
+<section class="card"><h2>CO3 · CSP support allocation</h2><p>Backtracking search with forward checking assigns simulated requests to staff with matching skills and availability. Each staff member can handle at most one request in the same time slot.</p>
+{% if result.csp.assignment %}<table><tr><th>Request</th><th>Time</th><th>Required skill</th><th>Assigned staff</th></tr>{% for req,person in result.csp.assignment.items() %}<tr><td>{{req}}</td><td>{{result.csp.requests[req].slot}}</td><td>{{result.csp.requests[req].needs}}</td><td>{{person}}</td></tr>{% endfor %}</table>{% else %}<p>No valid assignment found.</p>{% endif %}
+<p>Search calls: {{result.csp.nodes}}</p></section>
+<section class="card"><h2>CO4 · Knowledge and inference</h2><p><b>Facts:</b> {% for f in result.facts %}<span class="pill">{{f}}</span>{% else %}No special-condition facts{% endfor %}</p><p><b>Rules:</b></p><ul>{% for r in result.rules %}<li>{{r}}</li>{% else %}<li>No rule triggered by current inputs.</li>{% endfor %}</ul><p><b>Inferred conclusions:</b> {% for c in result.conclusions %}<span class="pill">{{c}}</span>{% else %}No conclusions{% endfor %}</p></section>
+{% endif %}
+{% endif %}
+<section class="card"><h2>Project scope</h2><p><b>Agent:</b> route-planning assistant. <b>Environment:</b> synthetic campus graph. <b>Inputs:</b> start, destination, mobility preference, lift status and one closure. <b>Outputs:</b> candidate routes, costs, expanded nodes, support allocation and rule conclusions.</p><p><b>SDG connection:</b> SDG 4 (inclusive education), SDG 10 (reduced inequalities), SDG 11 (inclusive and accessible communities).</p></section>
+</main></body></html>
