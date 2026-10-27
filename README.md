@@ -1,3 +1,4 @@
+Airin jerry,Ajil Denny,Alan James,ALdrin Andrus,Allen p Jison,Ambalika ES
 # Group 3 — Accessible Campus Navigation
 **Course:** CST401 Artificial Intelligence (S7, 2019 Scheme)  
 **SDGs:** 4, 10 and 11
